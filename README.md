@@ -1,12 +1,10 @@
 # Daffa Andhika Pratama — Portfolio
 
-Personal portfolio website built with React and Vite.
+Personal portfolio website showcasing my projects, skills, and background as a developer.
 
-## About
+## Overview
 
-This website showcases my projects, technical skills, background, and contact information.
-
-The portfolio includes academic projects, personal projects, and competition work.
+This portfolio presents selected academic, competition, and personal projects, including web applications, mobile applications, game-related work, and personal utilities.
 
 ## Tech Stack
 
@@ -15,18 +13,17 @@ The portfolio includes academic projects, personal projects, and competition wor
 - JavaScript
 - Tailwind CSS
 - Framer Motion
-- Lucide React
 - React Router
+- Lucide React
 
 ## Features
 
 - Responsive portfolio layout
 - About section
 - Skills section
-- Featured projects
-- Other projects
+- Featured and other projects
 - Individual project detail pages
-- GitHub project links
+- GitHub repository links
 - Contact section
 - Responsive navigation
 - Active navigation indicator
@@ -36,15 +33,13 @@ The portfolio includes academic projects, personal projects, and competition wor
 
 ## Projects
 
-The portfolio currently includes:
+### Featured
 
-- EventKampus
-- E-Procurement System
-- Number Kaboom
-- GEMASTIK
-- YouTube Downloader
+- **EventKampus** — Full-Stack Web Application
+- **E-Procurement System** — Web & Mobile Application
+- **Number Kaboom** — Mobile Game
 
-Project information is stored in:
+### Other
 
-```text
-src/data/projects.js
+- **GEMASTIK** — Game Art / Competition Project
+- **YouTube Downloader** — Personal Utility
