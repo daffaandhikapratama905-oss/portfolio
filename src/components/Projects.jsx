@@ -1,91 +1,93 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { featuredProjects, otherProjects } from '../data/projects'
 
-function ProjectCard({ project }) {
+const allProjects = [...featuredProjects, ...otherProjects]
+
+function ProjectCard({ project, lead = false }) {
   return (
-    <article className="group flex h-full flex-col rounded-card border border-line bg-card p-6 transition-colors hover:border-accent">
-      <div>
-        <p className="text-sm font-medium text-accent">
-          {project.category}
-        </p>
-
-        <h3 className="mt-2 text-xl font-semibold">
-          {project.title}
-        </h3>
-
-        <p className="mt-3 text-sm text-muted">
-          {project.description}
-        </p>
+    <article className={`project-card${lead ? ' project-card-lead' : ''}`}>
+      <div className="project-card-meta">
+        <span>{project.category}</span>
+        {project.type && <span>{project.type}</span>}
       </div>
-
-      <div className="mt-6">
-        <div className="flex flex-wrap gap-2">
-          {project.tech.map((technology) => (
-            <span
-              key={technology}
-              className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-foreground"
-            >
-              {technology}
-            </span>
-          ))}
-        </div>
-
-        <Link
-          to={`/projects/${project.slug}`}
-          className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-accent transition-colors hover:text-accent-hover"
-        >
-          View project
-          <ArrowRight
-            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-      </div>
+      <h3 className="project-card-title">{project.title}</h3>
+      <p className="project-card-description">{project.description}</p>
+      {project.role && <p className="project-card-role">Role / <span>{project.role}</span></p>}
+      <ul aria-label={`${project.title} technologies`} className="editorial-chip-list project-tech-list">
+        {project.tech.map((technology) => <li key={technology}>{technology}</li>)}
+      </ul>
+      <Link to={`/projects/${project.slug}`} className="editorial-link project-card-link">
+        View project <ArrowRight aria-hidden="true" />
+      </Link>
     </article>
   )
 }
 
-function ProjectGroup({ title, items }) {
-  return (
-    <div className="mt-10">
-      <h3 className="text-xl font-semibold">{title}</h3>
+function ProjectDeck() {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const project = allProjects[activeIndex]
+  const move = (direction) => {
+    setActiveIndex((current) => (current + direction + allProjects.length) % allProjects.length)
+  }
 
-      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {items.map((project) => (
-          <ProjectCard key={project.slug} project={project} />
-        ))}
+  return (
+    <>
+      <div className="project-deck-topline">
+        <p className="eyebrow">{project.featured ? 'Featured project' : 'Other project'}</p>
+        <p className="project-count" aria-live="polite">
+          <span>0{activeIndex + 1}</span> / 0{allProjects.length}
+        </p>
       </div>
-    </div>
+      <ProjectCard project={project} lead={project.featured && activeIndex === 0} />
+      <div className="project-deck-controls" aria-label="Project navigation">
+        <button type="button" onClick={() => move(-1)} aria-label="Previous project">
+          <ArrowLeft aria-hidden="true" />
+        </button>
+        <button type="button" onClick={() => move(1)} aria-label="Next project">
+          <ArrowRight aria-hidden="true" />
+        </button>
+      </div>
+    </>
   )
 }
 
-function Projects() {
+function ProjectList() {
   return (
-    <section
-      id="projects"
-      aria-labelledby="projects-title"
-      className="border-t border-line py-16 sm:py-20 lg:py-24"
-    >
+    <>
+      <section className="project-group" aria-labelledby="featured-projects-title">
+        <h3 id="featured-projects-title" className="eyebrow project-group-title">Selected projects / 01—03</h3>
+        <div className="project-grid">
+          {featuredProjects.map((project, index) => (
+            <ProjectCard key={project.slug} project={project} lead={index === 0} />
+          ))}
+        </div>
+      </section>
+      <section className="project-group" aria-labelledby="other-projects-title">
+        <h3 id="other-projects-title" className="eyebrow project-group-title">Additional work / 04—05</h3>
+        <div className="project-grid project-grid-secondary">
+          {otherProjects.map((project) => <ProjectCard key={project.slug} project={project} />)}
+        </div>
+      </section>
+    </>
+  )
+}
+
+function Projects({ deck = false }) {
+  return (
+    <section id="projects" aria-labelledby="projects-title" className="editorial-section projects-section">
       <div className="container-page">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-accent">What I built</p>
-
-          <h2
-            id="projects-title"
-            className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
-          >
-            Projects
-          </h2>
-
-          <p className="mt-4 text-base text-muted sm:text-lg">
+        <div className="section-heading section-heading-inline">
+          <div>
+            <p className="eyebrow">04 — Selected work</p>
+            <h2 id="projects-title" className="section-title">Projects</h2>
+          </div>
+          <p className="section-intro">
             A selection of academic, competition, and personal projects.
           </p>
         </div>
-
-        <ProjectGroup title="Featured Projects" items={featuredProjects} />
-
-        <ProjectGroup title="Other Projects" items={otherProjects} />
+        {deck ? <ProjectDeck /> : <ProjectList />}
       </div>
     </section>
   )

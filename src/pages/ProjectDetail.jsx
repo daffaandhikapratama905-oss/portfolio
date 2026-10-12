@@ -1,10 +1,11 @@
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 
 import { getProjectBySlug } from '../data/projects'
 
 function DetailSection({ title, children }) {
   return (
-    <section className="border-t border-line pt-8">
+    <section className="detail-section border-t border-line pt-8">
       <h2 className="text-xl font-semibold">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
@@ -30,9 +31,38 @@ function ProjectDetail() {
   const { slug } = useParams()
   const project = getProjectBySlug(slug)
 
+  useEffect(() => {
+    if (!project) return undefined
+
+    const previousTitle = document.title
+    const description = document.querySelector('meta[name="description"]')
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    const ogDescription = document.querySelector('meta[property="og:description"]')
+    const previousDescription = description?.content
+    const previousOgTitle = ogTitle?.content
+    const previousOgDescription = ogDescription?.content
+    const title = `${project.title} | Daffa Andhika Pratama`
+
+    document.title = title
+    if (description) description.content = project.description
+    if (ogTitle) ogTitle.content = title
+    if (ogDescription) ogDescription.content = project.description
+
+    return () => {
+      document.title = previousTitle
+      if (description && previousDescription !== undefined) {
+        description.content = previousDescription
+      }
+      if (ogTitle && previousOgTitle !== undefined) ogTitle.content = previousOgTitle
+      if (ogDescription && previousOgDescription !== undefined) {
+        ogDescription.content = previousOgDescription
+      }
+    }
+  }, [project])
+
   if (!project) {
     return (
-      <main className="min-h-dvh py-12 sm:py-16">
+      <main id="main-content" tabIndex="-1" className="project-detail-page min-h-dvh py-12 sm:py-16">
         <div className="container-page">
           <h1 className="text-3xl font-bold tracking-tight">
             Project not found
@@ -54,18 +84,18 @@ function ProjectDetail() {
   }
 
   return (
-    <main className="min-h-dvh py-12 sm:py-16 lg:py-20">
+    <main id="main-content" tabIndex="-1" className="project-detail-page min-h-dvh py-12 sm:py-16 lg:py-20">
       <div className="container-page">
         {/* Back */}
         <Link
           to="/"
-          className="inline-flex min-h-11 items-center text-sm text-muted transition-colors hover:text-accent-hover"
+          className="detail-back-link inline-flex min-h-11 items-center text-sm text-muted transition-colors hover:text-accent-hover"
         >
           ← Back to home
         </Link>
 
         {/* Header */}
-        <header className="mt-10 max-w-3xl">
+        <header className="project-detail-header mt-10 max-w-3xl">
           <p className="text-sm font-medium text-accent">
             {project.category}
           </p>
