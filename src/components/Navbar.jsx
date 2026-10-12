@@ -1,114 +1,98 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import {
+  Braces,
+  FolderKanban,
+  House,
+  Mail,
+  Menu,
+  UserRound,
+  X,
+} from 'lucide-react'
 
-// Menu mengikuti wireframe di docs/04_TECH_ARCHITECTURE.md
 const NAV_ITEMS = [
-  { label: 'About', id: 'about' },
-  { label: 'Skills', id: 'skills' },
-  { label: 'Projects', id: 'projects' },
-  { label: 'Contact', id: 'contact' },
+  { label: 'Home', id: 'hero', Icon: House },
+  { label: 'About', id: 'about', Icon: UserRound },
+  { label: 'Skills', id: 'skills', Icon: Braces },
+  { label: 'Projects', id: 'projects', Icon: FolderKanban },
+  { label: 'Contact', id: 'contact', Icon: Mail },
 ]
 
-const SECTION_IDS = NAV_ITEMS.map((item) => item.id)
-
-// Section dianggap aktif jika bagian atasnya sudah melewati garis ini (px dari atas viewport)
-const ACTIVE_OFFSET = 120
-
-/** true jika halaman sudah di-scroll sedikit (untuk background/blur navbar) */
-function useScrolled(threshold = 8) {
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const update = () => setScrolled(window.scrollY > threshold)
-    const frame = requestAnimationFrame(update)
-    window.addEventListener('scroll', update, { passive: true })
-    return () => {
-      cancelAnimationFrame(frame)
-      window.removeEventListener('scroll', update)
-    }
-  }, [threshold])
-
-  return scrolled
-}
-
-/** id section yang sedang aktif di Home (null jika belum ada / di atas section pertama) */
 function useActiveSection(enabled) {
-  const [activeId, setActiveId] = useState(null)
+  const [activeId, setActiveId] = useState('hero')
 
   useEffect(() => {
     if (!enabled) return undefined
+    const sections = NAV_ITEMS
+      .map(({ id }) => document.getElementById(id))
+      .filter(Boolean)
+    if (!sections.length) return undefined
 
-    let frame = 0
-
-    const compute = () => {
-      frame = 0
-
-      const existing = SECTION_IDS.filter((id) => document.getElementById(id))
-      let current = null
-
-      for (const id of existing) {
-        const top = document.getElementById(id).getBoundingClientRect().top
-        if (top <= ACTIVE_OFFSET) current = id
-      }
-
-      // Section terakhir bisa terlalu pendek untuk mencapai garis aktif
-      const atBottom =
-        window.scrollY > 0 &&
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 2
-      if (atBottom && existing.length > 0) {
-        current = existing[existing.length - 1]
-      }
-
-      setActiveId(current)
-    }
-
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(compute)
-    }
-
-    frame = requestAnimationFrame(compute)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        if (visible[0]) setActiveId(visible[0].target.id)
+      },
+      { rootMargin: '-18% 0px -62% 0px', threshold: 0 },
+    )
+    sections.forEach((section) => observer.observe(section))
+    return () => observer.disconnect()
   }, [enabled])
 
-  return enabled ? activeId : null
+  return activeId
+}
+
+function NavLinks({ activeId, onNavigate, variant = 'row' }) {
+  return (
+    <ul className={variant === 'rail' ? 'nav-rail-links' : 'nav-row-links'}>
+      {NAV_ITEMS.map(({ label, id, Icon }) => {
+        const active = activeId === id
+        return (
+          <li key={id}>
+            <Link
+              to={`/#${id}`}
+              onClick={onNavigate}
+              aria-label={label}
+              aria-current={active ? 'location' : undefined}
+              title={variant === 'rail' ? label : undefined}
+              className={`nav-link${active ? ' is-active' : ''}`}
+            >
+              {variant === 'rail' ? (
+                <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.7} />
+              ) : (
+                label
+              )}
+              {variant === 'rail' && <span className="sr-only">{label}</span>}
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 function Navbar() {
-  const { pathname, key } = useLocation()
+  const { pathname, hash, key } = useLocation()
   const reduceMotion = useReducedMotion()
   const headerRef = useRef(null)
   const buttonRef = useRef(null)
-
-  // Menu dianggap terbuka hanya untuk location.key tempat ia dibuka.
-  // Setiap navigasi mengubah key, sehingga menu otomatis tertutup.
   const [openKey, setOpenKey] = useState(null)
   const isOpen = openKey === key
-
-  const scrolled = useScrolled()
   const isHome = pathname === '/'
-  const sectionActive = useActiveSection(isHome)
-
-  // Di Home: ikuti section yang terlihat. Di halaman project: tandai "Projects".
+  const observedSection = useActiveSection(isHome)
+  const hashSection = hash.slice(1)
   const activeId = isHome
-    ? sectionActive
+    ? NAV_ITEMS.some(({ id }) => id === hashSection)
+      ? hashSection
+      : observedSection
     : pathname.startsWith('/projects/')
       ? 'projects'
-      : null
-
-  const isProjectDetail = pathname.startsWith('/projects/')
+      : 'hero'
   const closeMenu = () => setOpenKey(null)
 
-  // Tutup menu jika layar membesar ke breakpoint desktop (md = 48rem = 768px)
   useEffect(() => {
     const query = window.matchMedia('(min-width: 48rem)')
     const onChange = (event) => {
@@ -118,10 +102,8 @@ function Navbar() {
     return () => query.removeEventListener('change', onChange)
   }, [])
 
-  // Escape menutup menu (fokus kembali ke tombol), klik di luar navbar juga menutup
   useEffect(() => {
     if (!isOpen) return undefined
-
     const onKeyDown = (event) => {
       if (event.key === 'Escape') {
         setOpenKey(null)
@@ -129,11 +111,8 @@ function Navbar() {
       }
     }
     const onPointerDown = (event) => {
-      if (headerRef.current && !headerRef.current.contains(event.target)) {
-        setOpenKey(null)
-      }
+      if (headerRef.current && !headerRef.current.contains(event.target)) closeMenu()
     }
-
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('pointerdown', onPointerDown)
     return () => {
@@ -142,69 +121,28 @@ function Navbar() {
     }
   }, [isOpen])
 
-  const showBackground = scrolled || isOpen
-
   return (
-    <header
-      ref={headerRef}
-      className={`sticky top-0 z-50 border-b transition-colors duration-200 ${
-        showBackground
-          ? 'border-line bg-background/80 backdrop-blur-md'
-          : 'border-transparent bg-transparent'
-      }`}
-    >
-      <div className="container-page">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link
-            to="/"
-            onClick={closeMenu}
-            className="rounded-md font-heading text-lg font-bold tracking-wide text-foreground transition-colors hover:text-accent-hover"
-          >
-            DAFFA
+    <>
+      <aside className="desktop-rail" aria-label="Portfolio navigation">
+        <Link to="/#hero" className="rail-mark" aria-label="Daffa, home">
+          D<span>.</span>
+        </Link>
+        <nav aria-label="Primary">
+          <NavLinks activeId={activeId} variant="rail" />
+        </nav>
+        <span className="rail-index" aria-hidden="true">DAP / 01</span>
+      </aside>
+
+      <header ref={headerRef} className="mobile-header">
+        <div className="container-page mobile-header-inner">
+          <Link to="/#hero" onClick={closeMenu} className="mobile-brand">
+            D<span>.</span>
           </Link>
 
-          {/* Desktop / tablet navigation */}
-          <nav aria-label="Main" className="hidden md:block">
-            <ul className="flex items-center gap-1">
-              {NAV_ITEMS.map((item) => {
-                const isActive = activeId === item.id
-                return (
-                  <li key={item.id}>
-                    <Link
-                      to={`/#${item.id}`}
-                      aria-current={isActive ? 'true' : undefined}
-                      className={`relative inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'text-foreground'
-                          : 'text-muted hover:text-foreground'
-                      }`}
-                    >
-                      {item.label}
-                      {isActive && (
-                        <motion.span
-                          layoutId="nav-active-indicator"
-                          initial={false}
-                          className="absolute inset-x-3 bottom-1 h-0.5 rounded-full bg-accent"
-                          transition={
-                            isProjectDetail
-                              ? { duration: 0 }
-                              : {
-                                  type: 'tween',
-                                  duration: 0.35,
-                                  ease: 'easeOut',
-                                }
-                          }
-                        />
-                      )}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+          <nav aria-label="Primary" className="tablet-nav">
+            <NavLinks activeId={activeId} />
           </nav>
 
-          {/* Mobile menu button */}
           <button
             ref={buttonRef}
             type="button"
@@ -212,61 +150,27 @@ function Navbar() {
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-line bg-surface text-foreground transition-colors hover:border-accent md:hidden"
+            className="menu-toggle"
           >
-            {isOpen ? (
-              <X className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            )}
+            {isOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
         </div>
 
-        {/* Mobile expandable menu */}
-        <AnimatePresence initial={false}>
-          {isOpen && (
-            <motion.div
-              id="mobile-menu"
-              className="overflow-hidden md:hidden"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
-            >
-              <nav aria-label="Mobile" className="pb-4 pt-1">
-                <ul className="flex flex-col gap-1">
-                  {NAV_ITEMS.map((item) => {
-                    const isActive = activeId === item.id
-                    return (
-                      <li key={item.id}>
-                        <Link
-                          to={`/#${item.id}`}
-                          onClick={closeMenu}
-                          aria-current={isActive ? 'true' : undefined}
-                          className={`flex min-h-12 items-center gap-3 rounded-lg px-3 text-base font-medium transition-colors ${
-                            isActive
-                              ? 'bg-card text-foreground'
-                              : 'text-muted hover:bg-surface hover:text-foreground'
-                          }`}
-                        >
-                          <span
-                            aria-hidden="true"
-                            className={`h-5 w-0.5 rounded-full ${
-                              isActive ? 'bg-accent' : 'bg-transparent'
-                            }`}
-                          />
-                          {item.label}
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </header>
+        <motion.div
+          id="mobile-menu"
+          className="mobile-menu"
+          aria-hidden={!isOpen}
+          inert={!isOpen}
+          initial={false}
+          animate={isOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
+        >
+          <nav aria-label="Mobile">
+            <NavLinks activeId={activeId} onNavigate={closeMenu} />
+          </nav>
+        </motion.div>
+      </header>
+    </>
   )
 }
 

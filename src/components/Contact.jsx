@@ -1,78 +1,54 @@
+import profilePhoto from '../assets/photo-profile.png'
+
 const CONTACT_LINKS = [
-  {
-    label: 'Email',
-    value: 'daffaandhikapratama905@gmail.com',
-    href: 'mailto:daffaandhikapratama905@gmail.com',
-  },
-  {
-    label: 'GitHub',
-    value: 'DaffaAndhikaPratama',
-    href: 'https://github.com/DaffaAndhikaPratama',
-  },
-  {
-    label: 'GitHub OSS',
-    value: 'daffaandhikapratama905-oss',
-    href: 'https://github.com/daffaandhikapratama905-oss',
-  },
-  {
-    label: 'LinkedIn',
-    value: 'Daffa Andhika Pratama',
-    href: 'https://www.linkedin.com/in/daffa-andhika-pratama-93ab20437/',
-  },
+  { label: 'Email', value: 'daffaandhikapratama905@gmail.com', href: 'mailto:daffaandhikapratama905@gmail.com' },
+  { label: 'GitHub', value: 'DaffaAndhikaPratama', href: 'https://github.com/DaffaAndhikaPratama' },
+  { label: 'GitHub OSS', value: 'daffaandhikapratama905-oss', href: 'https://github.com/daffaandhikapratama905-oss' },
+  { label: 'LinkedIn', value: 'Daffa Andhika Pratama', href: 'https://www.linkedin.com/in/daffa-andhika-pratama-93ab20437/' },
 ]
 
 function Contact() {
   return (
-    <section
-      id="contact"
-      aria-labelledby="contact-title"
-      className="border-t border-line py-16 sm:py-20 lg:py-24"
-    >
+    <section id="contact" aria-labelledby="contact-title" className="editorial-section contact-section">
       <div className="container-page">
-        <div className="grid gap-8 lg:grid-cols-3 lg:gap-12">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-accent">Get in touch</p>
-
-            <h2
-              id="contact-title"
-              className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
-            >
-              Contact
-            </h2>
-          </div>
-
-          <div className="min-w-0 lg:col-span-2">
-            <p className="max-w-2xl text-base text-muted sm:text-lg">
-              Feel free to reach out through email or connect with me on
-              GitHub and LinkedIn.
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {CONTACT_LINKS.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target={
-                    link.href.startsWith('mailto:')
-                      ? undefined
-                      : '_blank'
-                  }
-                  rel={
-                    link.href.startsWith('mailto:')
-                      ? undefined
-                      : 'noreferrer'
-                  }
-                  className="group min-w-0 rounded-card border border-line bg-card p-4 transition-colors hover:border-accent hover:bg-surface"
-                >
-                  <span className="block text-sm font-medium text-muted">
-                    {link.label}
-                  </span>
-
-                  <span className="mt-1 block truncate text-sm font-semibold text-foreground">
-                    {link.value}
-                  </span>
-                </a>
+        <div className="section-heading">
+          <p className="eyebrow">05 — Conversation</p>
+          <h2 id="contact-title" className="section-title">Contact</h2>
+        </div>
+        <div className="contact-layout">
+          <p className="contact-copy">
+            Feel free to reach out through email or connect with me on GitHub and LinkedIn.
+          </p>
+          <div className="contact-links-group">
+            <ul className="contact-list">
+              {CONTACT_LINKS.map((link, index) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    target={link.href.startsWith('mailto:') ? undefined : '_blank'}
+                    rel={link.href.startsWith('mailto:') ? undefined : 'noreferrer'}
+                    className="contact-link"
+                  >
+                    <span className="contact-link-index" aria-hidden="true">0{index + 1}</span>
+                    <span className="contact-link-label">{link.label}</span>
+                    <span className="contact-link-value">{link.value}</span>
+                  </a>
+                </li>
               ))}
+            </ul>
+            <div className="contact-profile">
+              <img
+                className="contact-profile-photo"
+                src={profilePhoto}
+                alt="Daffa Andhika Pratama"
+                loading="lazy"
+              />
+              <div className="contact-profile-copy">
+                <p className="contact-profile-title">The person behind the records</p>
+                <p className="contact-profile-details">
+                  Informatics Engineering<br />Universitas Buana Perjuangan Karawang
+                </p>
+              </div>
             </div>
           </div>
         </div>
