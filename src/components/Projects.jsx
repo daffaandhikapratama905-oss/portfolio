@@ -37,7 +37,7 @@ function ProjectDeck() {
       <div className="project-deck-topline">
         <p className="eyebrow">{project.featured ? 'Featured project' : 'Other project'}</p>
         <p className="project-count" aria-live="polite">
-          <span>0{activeIndex + 1}</span> / 0{allProjects.length}
+          <span>{String(activeIndex + 1).padStart(2, '0')}</span> / {String(allProjects.length).padStart(2, '0')}
         </p>
       </div>
       <ProjectCard project={project} lead={project.featured && activeIndex === 0} />
